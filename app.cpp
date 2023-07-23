@@ -43,14 +43,14 @@ void directories(std::string file){
                                 sizeOfFiles[s] += fs::file_size(de);
                             }
 
-                            if (de.path().has_root_directory()) {
-                                std::string drive = de.path().root_directory().string();
-                                filesInDrives[drive]++;
+                            // if (de.path().has_root_directory()) {
+                            //     std::string drive = de.path().root_directory().string();
+                            //     filesInDrives[drive]++;
 
-                                if (fs::is_regular_file(de)) {
-                                    sizeOfDrives[s] += fs::file_size(de);
-                                }
-                            }
+                            //     if (fs::is_regular_file(de)) {
+                            //         sizeOfDrives[s] += fs::file_size(de);
+                            //     }
+                            // }
                         }
 
                     }
@@ -86,12 +86,12 @@ void directories(std::string file){
             if(sizeOfFiles[val.first]!=0) std::cout <<"and size of file is "<< sizeOfFiles[val.first]<<" bytes ";
             std::cout <<"\n";
         }
-        std::cout << "DIRECTORIES........\n";
-        for(auto val:sizeOfDrives){
-            std::cout << val.first <<" directory has " << val.second << " files ";
-            if(sizeOfDrives[val.first]!=0) std::cout << "and size = " << sizeOfDrives[val.first] << " bytes ";
-            std::cout <<"\n";
-        }        
+        // std::cout << "DIRECTORIES........\n";
+        // for(auto val:sizeOfDrives){
+        //     std::cout << val.first <<" directory has " << val.second << " files ";
+        //     if(sizeOfDrives[val.first]!=0) std::cout << "and size = " << sizeOfDrives[val.first] << " bytes ";
+        //     std::cout <<"\n";
+        // }        
     }else{
         std::cout <<"No file exist\n";
     }
@@ -115,7 +115,13 @@ void directories(std::string file,std::string extension){
                         rdi.disable_recursion_pending();
                     }
                     else {
-                        if (de.path().has_extension()) {
+                        if(extension=="all"){
+                            if (fs::is_regular_file(de)) {
+                                size += fs::file_size(de);
+                                number++;
+                            }
+                        }
+                        else if (de.path().has_extension()) {
                             std::string s = de.path().extension().string();
                             if(s==extension) number++;
                             // numberofFiles[s]++;
@@ -177,7 +183,7 @@ void directories(std::string file,std::string extension){
     }
 }
 
-int fileSize(std::string file){
+void fileSize(std::string file){
     fs::path filePath = file;
     // Check if the file exists
     int size = 0;
@@ -189,14 +195,31 @@ int fileSize(std::string file){
             // std::cout << "File size: " << fs::file_size(filePath) << " bytes." << std::endl;
             // std::cout << "Absolute path for " << filePath << " is " << fs::absolute(filePath) << '\n';
         } else {
-            std::cout << "File does not exist or Not right path" << std::endl;
+            std::cout << "File does not exist or Not right path " << std::endl;
+            // directories(filePath,"all");
+
         }
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        if (fs::exists(filePath)){
+            directories(filePath,"all");
+            return;
+        }
+        else {
+            std::cerr << e.what()<< '\n';
+            return;
+            }
     }
-    return size;
+    if(size>1e9){
+        std::cout << (double)size/1e9 <<" GB \n";
+    }else if(size > 1e6){
+        std::cout << (double)size/1e6 <<" MB \n";
+    }else if (size > 1e3){
+        std::cout << (double)size/1e3 <<" KB \n";
+    }else{
+        std::cout << (double)size <<" Bytes \n";
+    }
 }
 
 void diskSpace(){
@@ -343,83 +366,93 @@ void deleteDuplicateFiles(std::string file){
 }
 
 int main(){
-    std::string file = "/Users/saumyasharma/Desktop/files";
+    std::string file = "~";
     std::cout <<"\n";
     while(true){
-        std::cout <<"What do you want to do (written with command)\n1)Free Space & Space utilized - fssu\n2)Know the file size - filesz\n3)Give the number & size of files with the specific extension - extfile\n4)Want a list of all files with nuumbers and size - lsfz \n5)Change the file path - chpath\n6)Large Files in there - lf\n7)File Duplicates in the given file - dups\n8)Delete Files - df \n9)If you want to delete all files with given specfic extension - dsf\n10)Delete all duplicate files\n11)End this - end\n";
+        std::cout <<"What do you want to do (written with command)\n1)Free Space & Space utilized\n2)Know the file size\n3)Give the number & size of files with the specific extension\n4)Want a list of all files with how many files and total size\n5)Change the file path\n6)Large Files in there\n7)File Duplicates in the given file\n8)Delete Files\n9)If you want to delete all files with given specfic extension\n10)Delete all duplicate files\n11)End this (type 0)\n";
         std::cout << "Please provide the command\n";
-        std::string command1;
-        std::cin >> command1;
-        if(command1 == "fssu"||command1=="1"){
-            diskSpace();
-        }else if(command1=="filesz"||command1=="2"){
-            int size = fileSize(file);
-            if(size>1e9){
-                std::cout << (double)size/1e9 <<" gB \n";
-            }else if(size > 1e6){
-                std::cout << (double)size/1e6 <<" MB \n";
-            }else if (size > 1e3){
-                std::cout << (double)size/1e3 <<" KB \n";
-            }else{
-                std::cout << (double)size <<" Bytes \n";
-            }
+        std::string command;
+        std::cin >> command;
+        int command1;
+        try{
+            command1 = stoi(command);
+        }
+        catch(std::invalid_argument& e){
+            std::cout<<"Please provide a number \n";
+            continue;
+        }
+        switch (command1){
+            case 1:   diskSpace();
+                        break;
+
+            case 2:   fileSize(file);
+                        break;
+
+            case 3:   {
+                        std::cout << "Please provide the extension (eg-> .pdf,.cpp,....)";
+                        std::string ext;
+                        std::cin >> ext;
+                        directories(file,ext); 
+                        break;
+                        }
+
+            case 4:   directories(file);
+                        break;
+
+            case 5:   std::cout <<"Give the file path(absolute or relative)\n";
+                        std::cin >> file;
+                        break;
+
+            case 6:   {std::cout << "Please provide the size you want to be a large file (in MB)";
+                        int largefile;
+                        std::cin >> largefile;
+                        LargeFiles(file,largefile);
+                        break;}
+
+            case 7:   duplicates(file);
+                        break;
+
+            case 8:   while(true)
+                        {
+                            std::cout << "Are you sure to delete "<<file <<"\n";
+                            std::cout << "(YES/NO)"<<"\n";
+                            std::string st;
+                            std::cin >> st;
+                            std::transform(st.begin(), st.end(), st.begin(), ::toupper);
+                            if(st=="YES"){
+                                deleteFile(file);
+                                break;
+                            }
+                            else if(st=="NO"){
+                                break;
+                            }
+                            else{
+                                std::cout<<"Invalid Input \n";
+                            }
+                        }
+                        break;
+
+            case 9:   {
+                        std::cout << "Give me the number of types of extension you want to delete\n";
+                        int x;
+                        std::cin >> x;
+                        std::vector<std::string> v(x);
+                        std::cout << "now please write the extension files" <<"\n";
+                        for(int i = 0; i< x; i++){
+                            std::cin >> v[i];
+                        }
+                        deleteFilesOfSpecificType(file,v);
+                        break;
+                        }
+
+            case 10:  deleteDuplicateFiles(file);
+                        break;
+
+            case 0:   std::cout <<"Thank You";
+                        break;
             
-        }else if(command1=="extfile"||command1=="3"){
-            std::cout << "Please provide the extension ";
-            std::string ext;
-            std::cin >> ext;
-            directories(file,ext); 
-        }else if(command1=="lsfz"||command1=="4"){
-            directories(file);
-        }else if(command1 == "chpath"||command1=="5"){
-            std::cout <<"Give the file path(absolute or relative)\n";
-            std::cin >> file;
-        }
-        else if(command1=="lf"||command1=="6"){
-            std::cout << "Please provide the size you want to be a large file (in MB)";
-            int largefile;
-            std::cin >> largefile;
-            LargeFiles(file,largefile);
-        }else if(command1 == "dups"|| command1=="7"){
-            duplicates(file);
-        }else if(command1=="df"||command1=="8"){
-            while(true)
-            {
-                std::cout << "Are you sure to delete "<<file <<"\n";
-                std::cout << "(YES/NO)"<<"\n";
-                std::string st;
-                std::cin >> st;
-                std::transform(st.begin(), st.end(), st.begin(), ::toupper);
-                if(st=="YES"){
-                    deleteFile(file);
-                    break;
-                }
-                else if(st=="NO"){
-                    break;;
-                }
-                else{
-                    std::cout<<"Invalid Input \n";
-                }
-            }
-        }else if(command1 ==  "dsf" || command1 == "9"){
-            std::cout << "Give me the number of types of extension you want to delete\n";
-            int x;
-            std::cin >> x;
-            std::vector<std::string> v(x);
-            std::cout << "now please write the extension files" <<"\n";
-            for(int i = 0; i< x; i++){
-                std::cin >> v[i];
-            }
-            deleteFilesOfSpecificType(file,v);
-        }
-        else if(command1 == ""||command1=="10"){
-            deleteDuplicateFiles(file);
-        }else if(command1 == "end"){
-            std::cout <<"Thank You";
-            break;
-        }
-        else{
-            std::cout << "no command like this\n";
+            default: std::cout << "no command like this\n";
+
         }
     }
     
